@@ -14,10 +14,18 @@ import {
   Clock,
 } from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { Pane } from 'tweakpane';
 
 const container = document.getElementById("viewport") as HTMLCanvasElement;
 const widthViewport = window.innerWidth;
 const heightViewport = window.innerHeight;
+
+const params = { color: '#66ccff' };
+const ui = document.getElementById('ui')!;
+const pane = new Pane({ container: ui, title: 'Material' });
+const scratchColor = new Color();
+
+const colorBinding = pane.addBinding(params, 'color', { label: 'Color' });
 
 const renderer = new WebGLRenderer({
   alpha: true,
@@ -34,7 +42,6 @@ renderer.toneMappingExposure = 1.0;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.autoUpdate = false;
 renderer.shadowMap.type = PCFSoftShadowMap;
-
 renderer.toneMapping = ACESFilmicToneMapping;
 
 const scene = new Scene();
@@ -60,6 +67,12 @@ const mat = new MeshStandardMaterial({
 });
 const cube = new Mesh(geo, mat);
 scene.add(cube);
+
+colorBinding.on('change', (ev: any) => {
+  scratchColor.set(ev.value as string);
+  scratchColor.convertSRGBToLinear();
+  mat.color.copy(scratchColor);
+});
 
 const clock = new Clock();
 function animate() {
