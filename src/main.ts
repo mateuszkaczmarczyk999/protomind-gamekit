@@ -13,6 +13,7 @@ import {
   Mesh,
   Clock,
 } from "three";
+import { ThreePerf } from "three-perf";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { Pane } from 'tweakpane';
 
@@ -43,6 +44,13 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.autoUpdate = false;
 renderer.shadowMap.type = PCFSoftShadowMap;
 renderer.toneMapping = ACESFilmicToneMapping;
+
+const perf = new ThreePerf({
+    anchorX: 'left',
+    anchorY: 'top',
+    domElement: document.body,
+    renderer: renderer
+});
 
 const scene = new Scene();
 scene.background = new Color(0x111111);
@@ -77,9 +85,13 @@ colorBinding.on('change', (ev: any) => {
 const clock = new Clock();
 function animate() {
   const dt = clock.getDelta();
+  perf.begin();
+
   cube.rotation.y += dt * 0.6;
   controls.update();
   renderer.render(scene, camera);
+  
+  perf.end();
   requestAnimationFrame(animate);
 }
 
