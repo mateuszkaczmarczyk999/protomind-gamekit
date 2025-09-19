@@ -15,18 +15,20 @@ import {
 } from "three";
 import { ThreePerf } from "three-perf";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-import { Pane } from 'tweakpane';
+import { Pane } from "tweakpane";
+import { FrameScheduler } from "./platform/FrameScheduler";
+import type { FrameTick } from "./platform/IFrame";
 
 const container = document.getElementById("viewport") as HTMLCanvasElement;
 const widthViewport = window.innerWidth;
 const heightViewport = window.innerHeight;
 
-const params = { color: '#66ccff' };
-const ui = document.getElementById('ui')!;
-const pane = new Pane({ container: ui, title: 'Material' });
+const params = { color: "#66ccff" };
+const ui = document.getElementById("ui")!;
+const pane = new Pane({ container: ui, title: "Material" });
 const scratchColor = new Color();
 
-const colorBinding = pane.addBinding(params, 'color', { label: 'Color' });
+const colorBinding = pane.addBinding(params, "color", { label: "Color" });
 
 const renderer = new WebGLRenderer({
   alpha: true,
@@ -46,16 +48,21 @@ renderer.shadowMap.type = PCFSoftShadowMap;
 renderer.toneMapping = ACESFilmicToneMapping;
 
 const perf = new ThreePerf({
-    anchorX: 'left',
-    anchorY: 'top',
-    domElement: document.body,
-    renderer: renderer
+  anchorX: "left",
+  anchorY: "top",
+  domElement: document.body,
+  renderer: renderer,
 });
 
 const scene = new Scene();
 scene.background = new Color(0x111111);
 
-const camera = new PerspectiveCamera(60, widthViewport / heightViewport, 0.1, 100);
+const camera = new PerspectiveCamera(
+  60,
+  widthViewport / heightViewport,
+  0.1,
+  100
+);
 camera.position.set(2.5, 2, 2.5);
 scene.add(camera);
 
@@ -76,23 +83,22 @@ const mat = new MeshStandardMaterial({
 const cube = new Mesh(geo, mat);
 scene.add(cube);
 
-colorBinding.on('change', (ev: any) => {
+colorBinding.on("change", (ev: any) => {
   scratchColor.set(ev.value as string);
   scratchColor.convertSRGBToLinear();
   mat.color.copy(scratchColor);
 });
 
-const clock = new Clock();
-function animate() {
-  const dt = clock.getDelta();
+
+
+const frameScheduler = new FrameScheduler();
+frameScheduler.addListener((tick: FrameTick) => {
   perf.begin();
 
-  cube.rotation.y += dt * 0.6;
+  cube.rotation.y += tick.deltaSec * 0.6;
   controls.update();
   renderer.render(scene, camera);
-  
-  perf.end();
-  requestAnimationFrame(animate);
-}
 
-requestAnimationFrame(animate);
+  perf.end();
+});
+frameScheduler.start();
